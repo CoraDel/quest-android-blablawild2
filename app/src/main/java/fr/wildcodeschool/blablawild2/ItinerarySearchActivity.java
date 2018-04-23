@@ -8,6 +8,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 public class ItinerarySearchActivity extends AppCompatActivity {
 
     public static final String EXTRA_TRIP = "EXTRA_TRIP";
@@ -34,13 +40,36 @@ public class ItinerarySearchActivity extends AppCompatActivity {
                 if (departure.isEmpty() || destination.isEmpty() || date.isEmpty()) {
                     Toast.makeText(ItinerarySearchActivity.this, R.string.fill_all_fields, Toast.LENGTH_SHORT).show();
                 } else {
-                    Intent intent = new Intent(ItinerarySearchActivity.this, ItineraryListActivity.class);
-                    TripModel tripModel = new TripModel(departure, destination, date);
+                    final Intent intent = new Intent(ItinerarySearchActivity.this, ItineraryListActivity.class);
+                    final TripModel tripModel = new TripModel(departure, destination, date);
+                    FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-                    intent.putExtra(EXTRA_TRIP, tripModel);
-                    startActivity(intent);
+                    DatabaseReference itinerarySearchRef = database.getReference("trips");
+                    String key = itinerarySearchRef.push().getKey();
+
+                    itinerarySearchRef.child(key).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            intent.putExtra(EXTRA_TRIP, tripModel);
+                            startActivity(intent);
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+                    itinerarySearchRef.child(key).setValue(tripModel);
+
+
+
+
+
                 }
             }
         });
+
+
     }
 }
